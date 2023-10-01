@@ -1,4 +1,4 @@
-import pygame,math,random,copy
+import pygame,math,random,copy,time
 import PyUI as pyui
 pygame.init()
 screen = pygame.display.set_mode((600, 600),pygame.RESIZABLE)
@@ -78,8 +78,8 @@ def checksolved(grid):
                 completed = False
     return completed
 
-def checksolveable(grid):
-    pmap = possible_map(grid)
+def checksolveable(grid,pmap=-1):
+    if pmap == -1: pmap = possible_map(grid)
     mini = int(len(grid)**0.5)
     for y,a in enumerate(pmap):
         for x,b in enumerate(a):
@@ -135,6 +135,7 @@ def possible_map(grid):
 def fill(grid):
     if checksolved(grid):
         return grid,1
+    start = time.time()
     pmap = possible_map(grid)
     ngrid = copy.deepcopy(grid)
     mini = int(len(grid)**0.5)
@@ -157,7 +158,7 @@ def fill(grid):
     if len(edit) == 0:
         return ngrid,0
     for a in edit:
-        ngrid[a[0]][a[1]] = a[2]                        
+        ngrid[a[0]][a[1]] = a[2]
     ngrid,found = fill(ngrid)
     return ngrid,found
 
@@ -170,19 +171,18 @@ def solve(grid,solutions=[],singlesolution=True,depth=0):
         refreshpyui(grid)
         gameloop()
         return solutions
-    if not checksolveable(grid):
+    pmap = possible_map(grid)
+    if not checksolveable(grid,pmap):
         return solutions
     else:
-        refreshpyui(grid)
-        gameloop()
-        pmap = possible_map(grid)
         for n in range(1,len(grid)+1):       
             for y,a in enumerate(pmap):
                 for x,b in enumerate(a):
                     if grid[y][x] == 0 and n in pmap[y][x]:
                         print(depth,len(solutions),'cords:',x,y,n)
                         grid[y][x] = n
-                        solutions = solve(copy.deepcopy(grid),solutions,singlesolution,depth+1)
+                        if checksolveable(grid):
+                            solutions = solve(copy.deepcopy(grid),solutions,singlesolution,depth+1)
                         if singlesolution and len(solutions)>0:
                             return solutions
                         grid[y][x] = 0
@@ -192,13 +192,9 @@ def solve(grid,solutions=[],singlesolution=True,depth=0):
             
             
     
-                        
-
-def refreshpyui(grid):
+def objectify(grid):
     trueg = grid
     grid = possible_map(grid)
-    if 'grid' in ui.IDs:
-        ui.IDs['grid'].wipe(ui,True)
     mini = int(len(grid)**0.5)
     textgrid = []
     for j,y in enumerate(grid):
@@ -206,15 +202,33 @@ def refreshpyui(grid):
         for i,x in enumerate(y):
             st = ''
             for a in x: st+=str(a)
+            st = textcolfilter(st)
             backingcol = (16, 163, 127)
             if ((j//mini)*mini+i//mini)%2 == 0: backingcol = (16,193,127) 
             if len(x) == 1 and trueg[j][i]!=0:
-                textgrid[-1].append(ui.maketext(0,0,textcolfilter(st),60,textcenter=True,backingcol=backingcol))
+                textgrid[-1].append(ui.maketext(0,0,st,60,textcenter=True,backingcol=backingcol))
             else:
-                textgrid[-1].append(ui.maketext(0,0,textcolfilter(st),15,maxwidth=40,backingcol=backingcol))
+                textgrid[-1].append(ui.maketext(0,0,st,15,maxwidth=40,backingcol=backingcol))
+    return textgrid
 
-    ui.IDs['grid'].data = textgrid
-    ui.IDs['grid'].refresh(ui)
+def refreshpyui(grid):
+    trueg = grid
+    grid = possible_map(grid)
+    mini = int(len(grid)**0.5)
+    for j,y in enumerate(grid):
+        for i,x in enumerate(y):
+            st = ''
+            for a in x: st+=str(a)
+            st = textcolfilter(st)
+            if st != ui.IDs['grid'].data[j][i].text:
+                ui.IDs['grid'].data[j][i].text = st
+                if len(x) == 1 and trueg[j][i]!=0:
+                    ui.IDs['grid'].data[j][i].textcenter = True
+                    ui.IDs['grid'].data[j][i].textsize = 60
+                else:
+                    ui.IDs['grid'].data[j][i].textcenter = False
+                    ui.IDs['grid'].data[j][i].textsize = 15
+                ui.IDs['grid'].data[j][i].refresh(ui)
                     
                 
             
@@ -245,10 +259,10 @@ grid =  [[0,0,0,0,0,0,0,0,0],
 ##        [0,0,9,0,0,0,0,1,7]]
 
 
-ui.maketable(40,40,grid,ID='grid',boxwidth=50,boxheight=50)
+ui.maketable(40,40,objectify(grid),ID='grid',boxwidth=50,boxheight=50)
 
-
-print(makegrid())
+print(solve(grid,singlesolution=False))
+##print(makegrid())
 
 while not done:
     gameloop()                                             
