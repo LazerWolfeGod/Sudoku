@@ -17,6 +17,8 @@ def gameloop():
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 done = True
+        if event.type == pygame.VIDEORESIZE:
+            pass
     screen.fill(pyui.Style.wallpapercol)
 
      
@@ -139,7 +141,7 @@ def makesudoku(size=9,diff=50):
         refreshpyui(grid)
         past = copy.deepcopy(grid)
         grid = strip(grid,cut)
-        f = solve(copy.deepcopy(grid),singlesolution=False,update=False)
+        f = solve(copy.deepcopy(grid),singlesolution=False,cutafterone=True)
         if len(f) == 1:
             stripped+=cut
             cut = max(int(cut*0.8),1)
@@ -196,7 +198,7 @@ def fill(grid):
     ngrid,found = fill(ngrid)
     return ngrid,found
 
-def solve(grid,solutions=-1,singlesolution=True,depth=0,update=True):
+def solve(grid,solutions=-1,singlesolution=True,depth=0,update=True,cutafterone=False):
     if solutions == -1:
         solutions = []
     if update: refreshpyui(grid)
@@ -216,17 +218,25 @@ def solve(grid,solutions=-1,singlesolution=True,depth=0,update=True):
                         if update: print(depth,len(solutions),'cords:',x,y,n)
                         grid[y][x] = n
                         if checksolveable(grid):
-                            solutions = solve(copy.deepcopy(grid),solutions,singlesolution,depth+1,update)
-                        if singlesolution and len(solutions)>0:
+                            solutions = solve(copy.deepcopy(grid),solutions,singlesolution,depth+1,update,cutafterone)
+                        if (singlesolution and len(solutions)>0) or (cutafterone and len(solutions)>1):
                             return solutions
                         grid[y][x] = 0
         return solutions
 
-                
-            
+class funcer:
+    def __init__(self,i,j):
+        self.func = lambda: updatesudoku(i,j)
+
+def updatesudoku(x,y):
+    box = ui.IDs['grid'].tableimages[y][x][1]
+    if len(box.text) == 0:
+        box.bounditems[0].enabled = True
+    else:
+        box.bounditems[0].enabled = False
             
     
-def objectify(grid):
+def outobjectify(grid):
     trueg = grid
     grid = possible_map(grid)
     mini = int(len(grid)**0.5)
@@ -243,6 +253,26 @@ def objectify(grid):
                 textgrid[-1].append(ui.maketext(0,0,st,60,textcenter=True,backingcol=backingcol))
             else:
                 textgrid[-1].append(ui.maketext(0,0,st,15,maxwidth=40,backingcol=backingcol))
+    return textgrid
+
+def inobjectify(grid):
+    trueg = grid
+    grid = possible_map(grid)
+    mini = int(len(grid)**0.5)
+    textgrid = []
+    for j,y in enumerate(grid):
+        textgrid.append([])
+        for i,x in enumerate(y):
+            st = ''
+            for a in x: st+=str(a)
+            st = textcolfilter(st)
+            backingcol = (16, 163, 127)
+            if ((j//mini)*mini+i//mini)%2 == 0: backingcol = (16,193,127) 
+            if len(x) == 1 and trueg[j][i]!=0:
+                textgrid[-1].append(ui.maketext(0,0,st,60,textcenter=True,backingcol=backingcol))
+            else:
+                func = funcer(i,j)
+                textgrid[-1].append(ui.maketextbox(0,0,command=func.func,textsize=51,chrlimit=1,backingcol=pyui.shiftcolor(backingcol,-8),col=backingcol,linelimit=1,textcenter=True,numsonly=True,textcol=(43,43,43),commandifkey=True,bounditems=[ui.maketextbox(1,1,textsize=15,numsonly=True,lines=1,width=48,height=15,border=0,spacing=2,col=backingcol,backingdraw=False,scalesize=False)]))
     return textgrid
 
 def refreshpyui(grid):
@@ -281,6 +311,7 @@ grid =  [[0,0,0,0,0,0,0,0,0],
          [0,0,2,0,1,0,0,0,0],
          [0,0,0,0,4,0,0,0,9]]
 
+grids = [[[0, 0, 0, 0, 0, 6, 8, 0, 0], [6, 0, 0, 0, 2, 3, 4, 0, 0], [0, 0, 0, 9, 1, 0, 2, 0, 3], [0, 0, 2, 3, 0, 9, 7, 5, 6], [0, 0, 8, 0, 5, 0, 0, 0, 9], [0, 3, 0, 6, 0, 0, 0, 2, 8], [2, 0, 6, 8, 0, 5, 0, 1, 4], [8, 9, 0, 0, 0, 4, 0, 3, 0], [0, 0, 4, 2, 0, 1, 0, 0, 0]], [[2, 0, 3, 0, 0, 0, 7, 0, 0], [0, 0, 0, 0, 0, 9, 0, 0, 0], [6, 9, 8, 0, 5, 0, 0, 0, 0], [1, 0, 4, 0, 0, 0, 0, 9, 0], [3, 2, 9, 0, 8, 1, 0, 0, 0], [0, 0, 0, 0, 3, 0, 0, 2, 0], [9, 1, 0, 0, 4, 0, 0, 6, 2], [4, 0, 0, 0, 0, 6, 0, 8, 5], [0, 5, 0, 0, 0, 3, 9, 4, 7]], [[0, 1, 3, 4, 9, 5, 7, 6, 8], [0, 8, 0, 1, 2, 0, 9, 4, 5], [4, 0, 0, 7, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 2, 6], [0, 2, 0, 3, 4, 0, 0, 0, 7], [0, 7, 0, 5, 0, 2, 3, 0, 0], [1, 0, 0, 0, 0, 0, 6, 0, 3], [0, 0, 9, 0, 0, 0, 5, 8, 0], [0, 5, 8, 0, 0, 9, 0, 0, 4]], [[1, 2, 0, 0, 8, 0, 0, 3, 7], [0, 0, 8, 0, 1, 7, 0, 0, 9], [0, 6, 0, 0, 9, 2, 0, 0, 0], [2, 0, 0, 0, 5, 4, 8, 9, 0], [4, 9, 6, 0, 2, 8, 0, 0, 0], [8, 7, 5, 0, 0, 0, 0, 2, 1], [0, 4, 2, 0, 7, 1, 0, 0, 3], [6, 1, 7, 0, 4, 0, 0, 8, 0], [0, 0, 0, 2, 0, 0, 0, 0, 4]], [[0, 2, 7, 4, 0, 6, 0, 5, 8], [8, 4, 9, 0, 0, 0, 6, 0, 2], [0, 3, 6, 0, 0, 0, 1, 0, 0], [2, 0, 4, 0, 0, 9, 0, 0, 7], [0, 0, 5, 7, 0, 0, 2, 0, 0], [0, 6, 0, 2, 4, 0, 0, 1, 5], [0, 5, 0, 3, 0, 8, 0, 0, 9], [6, 7, 2, 0, 0, 4, 5, 0, 3], [0, 0, 3, 6, 5, 0, 0, 0, 0]], [[0, 5, 0, 0, 0, 6, 0, 0, 0], [0, 0, 0, 3, 0, 8, 0, 9, 0], [1, 0, 0, 0, 0, 0, 4, 3, 0], [0, 0, 0, 2, 0, 0, 7, 5, 0], [0, 3, 0, 4, 8, 1, 0, 2, 9], [0, 8, 2, 0, 0, 0, 0, 1, 0], [0, 0, 5, 6, 0, 4, 9, 7, 0], [4, 2, 0, 0, 0, 5, 8, 6, 1], [7, 0, 0, 8, 1, 9, 0, 0, 0]], [[0, 0, 0, 0, 8, 7, 0, 0, 9], [0, 0, 0, 1, 5, 2, 3, 0, 7], [5, 0, 0, 0, 0, 9, 0, 0, 4], [7, 0, 1, 6, 2, 4, 9, 0, 0], [9, 0, 0, 7, 1, 0, 0, 0, 0], [4, 0, 2, 5, 9, 8, 0, 0, 3], [0, 0, 0, 0, 3, 0, 8, 7, 0], [0, 0, 7, 0, 4, 6, 2, 0, 5], [0, 0, 6, 2, 7, 0, 0, 0, 0]], [[2, 0, 4, 0, 0, 0, 6, 7, 0], [6, 0, 0, 0, 4, 8, 0, 3, 0], [8, 1, 0, 0, 0, 7, 0, 0, 0], [0, 0, 2, 0, 9, 0, 8, 5, 0], [0, 6, 5, 8, 0, 1, 4, 0, 0], [3, 0, 0, 5, 2, 4, 7, 1, 6], [0, 2, 0, 0, 0, 0, 9, 6, 0], [4, 0, 6, 9, 0, 0, 3, 0, 0], [0, 0, 0, 0, 7, 0, 0, 0, 0]], [[0, 0, 0, 0, 0, 9, 5, 8, 7], [7, 6, 4, 0, 5, 8, 0, 0, 0], [9, 0, 8, 0, 0, 7, 0, 0, 0], [4, 3, 0, 0, 0, 0, 0, 0, 0], [0, 0, 9, 0, 3, 4, 0, 0, 8], [0, 2, 5, 0, 9, 0, 0, 1, 0], [0, 0, 1, 0, 6, 0, 8, 7, 2], [3, 0, 2, 4, 7, 5, 9, 0, 0], [6, 9, 0, 0, 1, 2, 3, 0, 0]], [[2, 5, 0, 4, 0, 8, 6, 0, 0], [1, 8, 0, 0, 2, 0, 0, 0, 0], [3, 9, 0, 0, 0, 6, 0, 7, 8], [4, 0, 1, 0, 8, 0, 7, 0, 0], [0, 2, 3, 0, 1, 0, 9, 0, 5], [5, 0, 0, 0, 0, 0, 1, 8, 0], [7, 1, 0, 0, 0, 9, 3, 0, 0], [0, 4, 0, 5, 6, 0, 0, 1, 0], [0, 0, 5, 8, 0, 1, 4, 9, 0]]]
 
 ##grid = [[0,0,0,2,0,6,5,4,0],
 ##        [5,9,0,0,0,0,6,0,0],
@@ -292,17 +323,17 @@ grid =  [[0,0,0,0,0,0,0,0,0],
 ##        [2,4,6,1,7,9,0,0,0],
 ##        [0,0,9,0,0,0,0,1,7]]
 
+ui.styleset(scalesize=True)
+ui.maketable(40,40,inobjectify(random.choice(grids)),ID='grid',boxwidth=50,boxheight=50,scalesize=True,scaleby='vertical')
 
-ui.maketable(40,40,objectify(grid),ID='grid',boxwidth=50,boxheight=50)
-
-data = []
-for b in range(10):
-    start = time.time()
-    sudoku = makesudoku(diff=40)
-    print('time:',time.time()-start)
-    refreshpyui(sudoku)
-    data.append(sudoku)
-print('done',data)
+##data = []
+##for b in range(10):
+##    start = time.time()
+##    sudoku = makesudoku(diff=40)
+##    print('time:',time.time()-start)
+##    refreshpyui(sudoku)
+##    data.append(sudoku)
+##print('done',data)
 
 ##print(solve(grid,singlesolution=False))
 ##print(makegrid())
