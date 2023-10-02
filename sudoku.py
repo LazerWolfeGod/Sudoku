@@ -117,6 +117,40 @@ def makegrid(size=9):
     solutions = solve(grid)
     return solutions[0]
 
+def strip(grid,count):
+    size = len(grid)
+    ngrid = copy.deepcopy(grid)
+    for a in range(count):
+        x = random.randint(0,size-1)
+        y = random.randint(0,size-1)
+        while ngrid[y][x] == 0:
+            x = random.randint(0,size-1)
+            y = random.randint(0,size-1)
+        ngrid[y][x] = 0
+    return ngrid
+
+def makesudoku(size=9,diff=50):
+    grid = makegrid(size)
+    stripped = 10
+    grid = strip(grid,stripped)
+    cut = 4
+    attempts = 0
+    while 1:
+        refreshpyui(grid)
+        past = copy.deepcopy(grid)
+        grid = strip(grid,cut)
+        f = solve(copy.deepcopy(grid),singlesolution=False,update=False)
+        if len(f) == 1:
+            stripped+=cut
+            cut = max(int(cut*0.8),1)
+            attempts = 0
+        elif stripped>diff or attempts>4:
+            return past
+        else:
+            grid = past
+            attempts+=1
+    
+
 def possible_map(grid):
     pmap = [[[] for a in range(len(grid[0]))] for b in range(len(grid))]
     for y,a in enumerate(grid):
@@ -162,14 +196,14 @@ def fill(grid):
     ngrid,found = fill(ngrid)
     return ngrid,found
 
-def solve(grid,solutions=[],singlesolution=True,depth=0):
-    refreshpyui(grid)
-    gameloop()
+def solve(grid,solutions=-1,singlesolution=True,depth=0,update=True):
+    if solutions == -1:
+        solutions = []
+    if update: refreshpyui(grid)
     grid,found = fill(grid)
     if checksolved(grid):
         solutions.append(grid)
-        refreshpyui(grid)
-        gameloop()
+        if update: refreshpyui(grid)
         return solutions
     pmap = possible_map(grid)
     if not checksolveable(grid,pmap):
@@ -179,10 +213,10 @@ def solve(grid,solutions=[],singlesolution=True,depth=0):
             for y,a in enumerate(pmap):
                 for x,b in enumerate(a):
                     if grid[y][x] == 0 and n in pmap[y][x]:
-                        print(depth,len(solutions),'cords:',x,y,n)
+                        if update: print(depth,len(solutions),'cords:',x,y,n)
                         grid[y][x] = n
                         if checksolveable(grid):
-                            solutions = solve(copy.deepcopy(grid),solutions,singlesolution,depth+1)
+                            solutions = solve(copy.deepcopy(grid),solutions,singlesolution,depth+1,update)
                         if singlesolution and len(solutions)>0:
                             return solutions
                         grid[y][x] = 0
@@ -220,17 +254,17 @@ def refreshpyui(grid):
             st = ''
             for a in x: st+=str(a)
             st = textcolfilter(st)
-            if st != ui.IDs['grid'].data[j][i].text:
-                ui.IDs['grid'].data[j][i].text = st
-                if len(x) == 1 and trueg[j][i]!=0:
-                    ui.IDs['grid'].data[j][i].textcenter = True
-                    ui.IDs['grid'].data[j][i].textsize = 60
-                else:
-                    ui.IDs['grid'].data[j][i].textcenter = False
-                    ui.IDs['grid'].data[j][i].textsize = 15
+            prev = [ui.IDs['grid'].data[j][i].text,ui.IDs['grid'].data[j][i].textcenter]
+            ui.IDs['grid'].data[j][i].text = st
+            if len(x) == 1 and trueg[j][i]!=0:
+                ui.IDs['grid'].data[j][i].textcenter = True
+                ui.IDs['grid'].data[j][i].textsize = 60
+            else:
+                ui.IDs['grid'].data[j][i].textcenter = False
+                ui.IDs['grid'].data[j][i].textsize = 15
+            if prev!=[ui.IDs['grid'].data[j][i].text,ui.IDs['grid'].data[j][i].textcenter]:
                 ui.IDs['grid'].data[j][i].refresh(ui)
-                    
-                
+    gameloop()                
             
             
         
@@ -261,7 +295,16 @@ grid =  [[0,0,0,0,0,0,0,0,0],
 
 ui.maketable(40,40,objectify(grid),ID='grid',boxwidth=50,boxheight=50)
 
-print(solve(grid,singlesolution=False))
+data = []
+for b in range(10):
+    start = time.time()
+    sudoku = makesudoku(diff=40)
+    print('time:',time.time()-start)
+    refreshpyui(sudoku)
+    data.append(sudoku)
+print('done',data)
+
+##print(solve(grid,singlesolution=False))
 ##print(makegrid())
 
 while not done:
