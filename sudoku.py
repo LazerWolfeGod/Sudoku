@@ -29,7 +29,7 @@ def gameloop():
 
 def textcolfilter(st):
     out = ''
-    dic = {'1':'(255,0,0)','2':'(0,255,0)','3':'(0,0,255)','4':'(255,255,0)','5':'(255,255,255)','6':'(0,100,160)','7':'(0,0,150)','8':'(0,140,0)','9':'(255,0,180)'}
+    dic = {'1':'(255,0,0)','2':'(0,255,0)','3':'(0,0,255)','4':'(255,255,0)','5':'(255,255,255)','6':'(0,100,160)','7':'(0,0,150)','8':'(255,100,0)','9':'(205,0,180)'}
     for a in st:
         out+='{"'+a+'" col='+dic[a]+'}'
     return out
@@ -361,7 +361,6 @@ ui.styleset(scalesize=True)
 ui.maketable(0,0,inobjectify(random.choice(grids)),ID='grid',boxwidth=50,boxheight=50,scalesize=True,scaleby='vertical',anchor=('w/2','h/2'),center=True)
 
 ##ui.maketextbox(10,10,'',300,40,imgdisplay=True)
-
 
 ##data = []
 ##for b in range(10):
