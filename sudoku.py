@@ -234,18 +234,40 @@ class funcer:
 def updatesudoku(x,y):
     box = ui.IDs['grid'].tableimages[y][x][1]
     box.chrlimit = 1
-    box.text.replace('0','')
+    box.text = box.text.replace('0','')
+    if '"' in box.text:
+        chrs = '123456789'
+        if box.text[0] in chrs:
+            box.text = box.text[0]
+        elif box.text[-1] in chrs:
+            box.text = box.text[-1]
     if len(box.text) == 0:
         box.bounditems[0].enabled = True
     else:
         box.bounditems[0].enabled = False
         if len(box.text) == 1:
             box.text = textcolfilter(box.text)
+            box.typingcursor = -1
             box.chrlimit = len(box.text)
         else:
             box.text = ''
             box.bounditems[0].enabled = True
+    
     grid = []
+    for y in ui.IDs['grid'].tableimages:
+        grid.append([])
+        for x in y:
+            if x[1].text == '':
+                grid[-1].append(0)
+            else:
+                grid[-1].append(int(x[1].text[2]))
+
+
+    if not valid(grid):
+        print('u made a mistake L')
+    else:
+        if checksolved(grid):
+            print('solved')
     
             
     
