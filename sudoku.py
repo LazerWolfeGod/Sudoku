@@ -233,10 +233,18 @@ class funcer:
 
 def updatesudoku(x,y):
     box = ui.IDs['grid'].tableimages[y][x][1]
+    box.chrlimit = 1
+    box.text.replace('0','')
     if len(box.text) == 0:
         box.bounditems[0].enabled = True
     else:
         box.bounditems[0].enabled = False
+        if len(box.text) == 1:
+            box.text = textcolfilter(box.text)
+            box.chrlimit = len(box.text)
+        else:
+            box.text = ''
+            box.bounditems[0].enabled = True
     grid = []
     
             
@@ -277,7 +285,7 @@ def inobjectify(grid):
                 textgrid[-1].append(ui.maketext(0,0,st,60,textcenter=True,backingcol=backingcol))
             else:
                 func = funcer(i,j)
-                textgrid[-1].append(ui.maketextbox(0,0,command=func.func,textsize=60,chrlimit=1,backingcol=pyui.shiftcolor(backingcol,-8),col=backingcol,linelimit=1,textcenter=True,numsonly=True,textcol=(43,43,43),commandifkey=True,bounditems=[ui.maketextbox(3,3,textsize=15,numsonly=True,lines=1,width=44,height=15,border=0,spacing=2,col=backingcol,backingdraw=False,borderdraw=False,selectbordersize=0,scalesize=True,scaleby='vertical')]))
+                textgrid[-1].append(ui.maketextbox(0,0,command=func.func,textsize=60,chrlimit=1,backingcol=pyui.shiftcolor(backingcol,-8),col=backingcol,linelimit=1,textcenter=True,numsonly=True,imgdisplay=True,textcol=(43,43,43),commandifkey=True,bounditems=[ui.maketextbox(3,3,textsize=15,numsonly=True,lines=1,width=44,height=15,border=0,spacing=2,col=backingcol,backingdraw=False,borderdraw=False,selectbordersize=0,scalesize=True,scaleby='vertical')]))
     return textgrid
 
 def refreshpyui(grid):
@@ -327,11 +335,10 @@ grids = [[[0, 0, 0, 0, 0, 6, 8, 0, 0], [6, 0, 0, 0, 2, 3, 4, 0, 0], [0, 0, 0, 9,
 ##        [2,4,6,1,7,9,0,0,0],
 ##        [0,0,9,0,0,0,0,1,7]]
 
-ui.addinbuiltimage('tree',pygame.image.load('tree.png'))
 ui.styleset(scalesize=True)
 ui.maketable(0,0,inobjectify(random.choice(grids)),ID='grid',boxwidth=50,boxheight=50,scalesize=True,scaleby='vertical',anchor=('w/2','h/2'),center=True)
 
-ui.maketextbox(10,10,'',300,40,imgdisplay=True)
+##ui.maketextbox(10,10,'',300,40,imgdisplay=True)
 
 
 ##data = []
