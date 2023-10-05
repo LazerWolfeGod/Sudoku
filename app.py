@@ -9,7 +9,7 @@ pygame.scrap.init()
 ui = pyui.UI()
 done = False
 clock = pygame.time.Clock()
-ui.addinbuiltimage('sudoku',pygame.image.load('sukoku.png'))
+##ui.addinbuiltimage('sudoku',pygame.image.load('sukoku.png'))
 ui.escapeback = False
 
 ui.styleload_lightblue()
@@ -270,7 +270,7 @@ class Main:
     def makegui(self):
         # main menu
         ui.styleset(text_textcol = (40,40,60))
-        ui.maketext(0,0,'{sudoku} Sudoku {logo}',100,anchor=('w/2','h/4'),center=True)
+        ui.maketext(0,0,'Sudoku {logo}',100,anchor=('w/2','h/4'),center=True)
         ui.makebutton(0,0,'Sudoku',55,lambda: ui.movemenu('sudoku select','left'),anchor=('w/2','h/2'),center=True)
 
         ui.maketext(0,40,'Sudoku Level Select',60,'sudoku select',anchor=('w/2',0),center=True,backingdraw=True,layer=3,horizontalspacing=300,verticalspacing=20)
@@ -466,7 +466,7 @@ class Main:
             
     def makepopup(self,txt):
         ui.delete('sudoku pop up',False)
-        ui.maketext(10,10,txt,45,'sudoku level',backingdraw=True,killtime=5,ID='sudoku pop up')
+        ui.maketext(0,10,txt,45,'sudoku level',backingdraw=True,killtime=5,ID='sudoku pop up',anchor=('w/2',0),objanchor=('w/2',0))
     def highlight(self,x,y,glowcol=(240,40,40,90),killtime=30):
         obj = ui.IDs['sudoku grid'].tableimages[y][x][1]
         if not (pyui.RECT in [type(a) for a in obj.bounditems]):
@@ -479,7 +479,7 @@ class Main:
         if not os.path.isfile(pyui.resourcepath('data.json')):
             data = {}
             for i,a in enumerate(self.levels):
-                data[i] = [0,a,False]
+                data[i] = [0,a[0],False]
             with open('data.json','w') as f:
                 json.dump(data,f)
         with open('data.json','r') as f:
@@ -511,7 +511,6 @@ while not done:
     pygame.display.flip()
     clock.tick(60)                                               
 pygame.quit()
-
 
 
 
