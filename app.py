@@ -9,17 +9,20 @@ pygame.scrap.init()
 ui = pyui.UI()
 done = False
 clock = pygame.time.Clock()
-##ui.addinbuiltimage('sudoku',pygame.image.load('sukoku.png'))
+ui.addinbuiltimage('sudoku',pygame.image.load(pyui.resourcepath('assets\\sukoku.png')))
 ui.escapeback = False
 
 ui.styleload_lightblue()
 
-
+textfilterdic = {'1':(255,0,0),'2':(0,255,0),'3':(0,0,255),'4':(255,255,0),'5':(255,255,255),'6':(0,100,160),'7':(0,0,150),'8':(255,100,0),'9':(205,0,180)}
+fade = pyui.genfade([(255,0,0),(0,0,255),(0,255,0)],9)
+for i in range(10,27):
+    textfilterdic[str(i)] = fade[i-10]
+        
 def textcolfilter(st):
     out = ''
-    dic = {'1':'(255,0,0)','2':'(0,255,0)','3':'(0,0,255)','4':'(255,255,0)','5':'(255,255,255)','6':'(0,100,160)','7':'(0,0,150)','8':'(255,100,0)','9':'(205,0,180)'}
     for a in st:
-        out+='{"'+a+'" col='+dic[a]+'}'
+        out+='{"'+a+'" col='+str(textfilterdic[a])+'}'
     return out
 
 class Sudoku:
@@ -251,7 +254,90 @@ class Sudoku:
                             grid[y][x] = 0
             return solutions
 class Minesweeper:
-    img_unknown = pygame.image.load(pyui.resourcepath('sukoku assets\\unknown.png'))
+    unknown = pygame.image.load(pyui.resourcepath('assets\\unknown2.png'))
+    unknowntop = pygame.image.load(pyui.resourcepath('assets\\unknown top.png'))
+    unknownbottom = pygame.image.load(pyui.resourcepath('assets\\unknown bottom.png'))
+    unknown.set_colorkey((255,255,255))
+    unknowntop.set_colorkey((255,255,255))
+    unknownbottom.set_colorkey((255,255,255))
+    
+    base = pygame.image.load(pyui.resourcepath('assets\\base.png'))
+    basetop = pygame.image.load(pyui.resourcepath('assets\\basetop.png'))
+    basebottom = pygame.image.load(pyui.resourcepath('assets\\basebottom.png'))
+    baseboth = pygame.image.load(pyui.resourcepath('assets\\baseboth.png'))
+    
+    flag = pygame.image.load(pyui.resourcepath('assets\\flag.png'))
+    flagsmaller = pygame.image.load(pyui.resourcepath('assets\\flag smaller.png'))
+    bomb = pygame.image.load(pyui.resourcepath('assets\\bomb.png'))
+    bombsmaller = pygame.image.load(pyui.resourcepath('assets\\bomb smaller.png'))
+    flag.set_colorkey((255,255,255))
+    flagsmaller.set_colorkey((255,255,255))
+    bomb.set_colorkey((255,255,255))
+    bombsmaller.set_colorkey((255,255,255))
+
+    
+    def genimage(field,x,y,z,fieldmap):
+        val = field[y][z][x]
+        mapped = fieldmap[y][z][x]
+        up = False
+        down = False
+        if y == 0:
+            if len(field) == 1:
+                base = Minesweeper.base
+            else:
+                up = True
+                base = Minesweeper.basetop
+        else:
+            down = True
+            if y == len(field)-1:
+                base = Minesweeper.basebottom
+            else:
+                up = True
+                base = Minesweeper.baseboth
+        base.set_colorkey((255,255,255))
+        img = pygame.Surface((50,50))
+        img.fill((200,200,200))
+        if mapped == 0:
+            img.blit(Minesweeper.unknown,(0,0))  
+        elif mapped == 2:
+            img.blit(Minesweeper.flag,(0,0))
+        elif mapped == 1 and val == -1:
+            img.blit(Minesweeper.bomb,(0,0))
+        elif val != 0:
+            ui.write(img,25,25,str(val),30,textfilterdic[str(val)],font='calibre')
+
+        if up:
+            val = field[y+1][z][x]
+            mapped = fieldmap[y+1][z][x]
+            if mapped == 0:
+                img.blit(Minesweeper.unknowntop,(32,3))
+            elif mapped == 2:
+                img.blit(Minesweeper.flagsmaller,(32,0))
+            elif mapped == 1 and val == -1:
+                img.blit(Minesweeper.bombsmaller,(32,0))
+            elif val != 0:
+                ui.write(img,42,8,str(val),14,textfilterdic[str(val)],font='calibre')
+        elif mapped == 0:
+            img.blit(Minesweeper.unknowntop,(32,3))
+        mapped = fieldmap[y][z][x]
+        if down:
+            val = field[y-1][z][x]
+            mapped = fieldmap[y-1][z][x]
+            if mapped == 0:
+                img.blit(Minesweeper.unknownbottom,(3,32))
+            elif mapped == 2:
+                img.blit(Minesweeper.flagsmaller,(0,32))
+            elif mapped == 1 and val == -1:
+                img.blit(Minesweeper.bombsmaller,(0,32))
+            elif val != 0:
+                ui.write(img,8,42,str(val),14,textfilterdic[str(val)],font='calibre')
+        elif mapped == 0:
+            img.blit(Minesweeper.unknownbottom,(3,32))
+
+        img.blit(base,(0,0))
+        return img
+        
+        
     def gengrid(x,y,z,cover):
         field = []
         for a in range(y):
@@ -295,6 +381,12 @@ class funcersl:
 class funcerus:
     def __init__(self,main,i,j):
         self.func = lambda: main.updatesudoku(i,j)
+class funcermc:
+    def __init__(self,main,x,y,z):
+        self.func = lambda: main.mineclicked(x,y,z)
+class funcerml:
+    def __init__(self,main,layer):
+        self.func = lambda: main.movelayer(layer)
 
 class Main:
     def __init__(self):
@@ -308,7 +400,7 @@ class Main:
     def makegui(self):
         # main menu
         ui.styleset(text_textcol = (40,40,60))
-        ui.maketext(0,0,'Sudoku {logo}',100,anchor=('w/2','h/4'),center=True)
+        ui.maketext(0,0,'{sudoku} Sudoku {logo}',100,anchor=('w/2','h/4'),center=True)
         ui.makebutton(0,0,'Sudoku',55,lambda: ui.movemenu('sudoku select','left'),anchor=('w/2','h/2-30'),center=True)
         ui.makebutton(0,0,'Minesweeper',55,lambda: ui.movemenu('mine select','left'),anchor=('w/2','h/2+30'),center=True)
 
@@ -356,9 +448,15 @@ class Main:
         ui.maketext(0,80,'Minesweeper Gamemode Select',60,'mine select',anchor=('w/2',0),center=True,maxwidth=450,textcenter=True)
         ui.maketext(0,0,'2D',50,'mine select',anchor=('w*0.4','h*0.4'),center=True)
         ui.makebutton(0,40,'Easy - 10x10',45,lambda: self.openmine(10,1,10,0.1),'mine select',anchor=('w*0.4','h*0.4'),center=True)
-##        ui.maketext(0,0,'3D',50,'mine select',anchor=('w*0.4','h*0.4'),center=True)
+        ui.maketext(0,0,'3D',50,'mine select',anchor=('w*0.6','h*0.4'),center=True)
+        ui.makebutton(0,40,'Easy - 4x4x4',45,lambda: self.openmine(4,4,4,0.1),'mine select',anchor=('w*0.6','h*0.4'),center=True)
+        ui.makebutton(0,90,'Medium - 6x6x6',45,lambda: self.openmine(6,6,6,0.1),'mine select',anchor=('w*0.6','h*0.4'),center=True)
+        ui.makebutton(0,140,'Hard - 8x8x8',45,lambda: self.openmine(8,8,8,0.1),'mine select',anchor=('w*0.6','h*0.4'),center=True)
+        
         ui.styleset(textsize=50)
-        ui.maketable(0,0,[],boxwidth=50,boxheight=50,scalesize=True,scaleby='vertical',anchor=('w/2','h/2'),center=True,menu='mine game',ID='minefield',linesize=0,textsize=50)
+        ui.maketable(0,0,[],boxwidth=50,boxheight=50,scalesize=True,scaleby='vertical',anchor=('w/2','h/2'),center=True,menu='mine game',ID='minefield',linesize=0,textsize=50,bounditems=[
+        ui.maketable(40,0,[],[],ID='field layer',anchor=('w','h/2'),objanchor=(0,'h/2'),boxwidth=50,boxheight=50,col=(140,140,140))
+            ])
 
 
     def makesudokutableinput(self,grid):
@@ -539,7 +637,9 @@ class Main:
             json.dump(self.leveldata,f)
 
     def openmine(self,x,y,z,cover):
+        ui.IDs['minefield'].wipe(ui)
         self.field = Minesweeper.gengrid(x,y,z,cover)
+        self.fieldmap = [[[0 for c in range(x)] for b in range(z)] for a in range(y)]
 
         data = copy.deepcopy(self.field)
         
@@ -547,12 +647,64 @@ class Main:
             for b in range(z):
                 for c in range(x):
                     num = data[a][b][c]
-                    data[a][b][c] = ui.maketext(0,0,'',50,img=Minesweeper.img_unknown,scaleby='vertical',border=0,verticalspacing=0,horizontalspacing=0)
-        ui.IDs['minefield'].data = data[0]
+                    func = funcermc(self,c,a,b)
+                    data[a][b][c] = ui.maketext(0,0,'',50,img=Minesweeper.genimage(self.field,c,a,b,self.fieldmap),scaleby='vertical',border=0,verticalspacing=0,horizontalspacing=0,command=func.func)
+        self.fieldlayer = 0
+        ui.IDs['minefield'].data = data[self.fieldlayer]
         ui.IDs['minefield'].refresh(ui)
-                    
+        self.freshfield = True
+
+        ui.IDs['field layer'].wipe(ui)
+        data = []
+        IDs = [f'layerselector{i}' for i in range(y)]
+        for a in range(y):
+            func = funcerml(self,a)
+            data.append([ui.makebutton(0,0,'',command=func.func,col=(100,200,100),togglecol=(151,150,150),toggleable=True,bindtoggle=IDs,ID=IDs[a],backingcol=(130,130,130),toggle=False)])
+        
+        data[self.fieldlayer][self.fieldlayer].toggle = True
+        data.reverse()
+        ui.IDs['field layer'].data = data
+        ui.IDs['field layer'].refresh(ui)             
         
         ui.movemenu('mine game','left')
+    def mineclicked(self,x,y,z):
+        if self.freshfield:
+            while self.field[y][z][x] != 0:
+                self.field = Minesweeper.gengrid(len(self.field[0][0]),len(self.field),len(self.field[0]),0.1)
+            self.movelayer(self.fieldlayer)
+
+        self.freshfield = False
+        if self.field[y][z][x] == -1:
+            print('BOMB - YOU FAILED')
+        self.fieldmap[y][z][x] = 1
+        self.updatemine(x,y,z)
+    def updatemine(self,x,y,z):
+        doubleupdate = []
+        if self.field[y][z][x] == 0:
+            for a in range(-1,2):
+                for b in range(-1,2):
+                    for c in range(-1,2):
+                        if not(a==0 and b==0 and c==0):
+                            if Minesweeper.inbox(self.field,x+c,y+a,z+b) and self.fieldmap[y+a][z+b][x+c] == 0:
+                                self.fieldmap[y+a][z+b][x+c] = 1
+                                self.updatemine(x+c,y+a,z+b)
+                                doubleupdate.append((x+c,y+a,z+b))
+        if self.fieldlayer == y:
+            ui.IDs['minefield'].data[z][x].img = Minesweeper.genimage(self.field,x,y,z,self.fieldmap)
+            ui.IDs['minefield'].data[z][x].refresh(ui)
+        for a in doubleupdate:
+            self.updatemine(a[0],a[1],a[2])
+        
+    def movelayer(self,level):
+        ui.IDs['field layer'].data[len(self.field)-level-1][0].toggle = True
+        self.fieldlayer = level
+        table = ui.IDs['minefield']
+        for z in range(len(table.data)):
+            for x in range(len(table.data[z])):
+                func = funcermc(self,x,self.fieldlayer,z)
+                table.data[z][x].command = func.func
+                table.data[z][x].img = Minesweeper.genimage(self.field,x,self.fieldlayer,z,self.fieldmap)
+                table.data[z][x].refresh(ui)
         
 
 main = Main()
@@ -574,7 +726,6 @@ while not done:
     pygame.display.flip()
     clock.tick(60)                                               
 pygame.quit()
-
 
 
 
