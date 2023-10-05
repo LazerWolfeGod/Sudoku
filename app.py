@@ -249,7 +249,45 @@ class Sudoku:
                             if (singlesolution and len(solutions)>0) or (cutafterone and len(solutions)>1):
                                 return solutions
                             grid[y][x] = 0
-            return solutions 
+            return solutions
+class Minesweeper:
+    img_unknown = pygame.image.load(pyui.resourcepath('sukoku assets\\unknown.png'))
+    def gengrid(x,y,z,cover):
+        field = []
+        for a in range(y):
+            field.append([])
+            for b in range(z):
+                field[-1].append([])
+                for c in range(x):
+                    if random.random()<cover:
+                        field[-1][-1].append(-1)
+                    else:
+                        field[-1][-1].append(0)
+        for a in range(y):
+            for b in range(z):
+                for c in range(x):
+                    if field[a][b][c] == 0:
+                        field[a][b][c] = Minesweeper.count(field,c,a,b)
+        return field
+
+    def count(field,x,y,z):
+        if field[y][z][x] == -1:
+            return -1
+        count = 0
+        for a in range(-1,2):
+            for b in range(-1,2):
+                for c in range(-1,2):
+                    if Minesweeper.inbox(field,x+c,y+a,z+b):
+                        if field[y+a][z+b][x+c] == -1:
+                            count+=1
+        return count
+
+    def inbox(field,x,y,z):
+        if x<0 or y<0 or z<0:
+            return False
+        if y>len(field)-1 or z>len(field[y])-1 or x>len(field[y][z])-1:
+            return False
+        return True
 
 class funcersl:
     def __init__(self,main,level):
@@ -271,7 +309,8 @@ class Main:
         # main menu
         ui.styleset(text_textcol = (40,40,60))
         ui.maketext(0,0,'Sudoku {logo}',100,anchor=('w/2','h/4'),center=True)
-        ui.makebutton(0,0,'Sudoku',55,lambda: ui.movemenu('sudoku select','left'),anchor=('w/2','h/2'),center=True)
+        ui.makebutton(0,0,'Sudoku',55,lambda: ui.movemenu('sudoku select','left'),anchor=('w/2','h/2-30'),center=True)
+        ui.makebutton(0,0,'Minesweeper',55,lambda: ui.movemenu('mine select','left'),anchor=('w/2','h/2+30'),center=True)
 
         ui.maketext(0,40,'Sudoku Level Select',60,'sudoku select',anchor=('w/2',0),center=True,backingdraw=True,layer=3,horizontalspacing=300,verticalspacing=20)
 
@@ -309,10 +348,18 @@ class Main:
         ui.maketext(15,15,'Show Wrong',32,'clues',maxwidth=110,backingcol=(47, 86, 179))
         ui.makebutton(105,25,'One',35,lambda: self.findwrong(1),'clues')
         ui.makebutton(180,25,'All',35,lambda: self.findwrong(1000),'clues')
-
         ui.maketext(20,75,'Get Clue',32,'clues',maxwidth=80,backingcol=(47, 86, 179))
         ui.makebutton(85,80,'Easy',35,lambda: self.findclue(True),'clues')
         ui.makebutton(165,80,'Hard',35,lambda: self.findclue(False),'clues')
+
+        # minesweeper gui
+        ui.maketext(0,80,'Minesweeper Gamemode Select',60,'mine select',anchor=('w/2',0),center=True,maxwidth=450,textcenter=True)
+        ui.maketext(0,0,'2D',50,'mine select',anchor=('w*0.4','h*0.4'),center=True)
+        ui.makebutton(0,40,'Easy - 10x10',45,lambda: self.openmine(10,1,10,0.1),'mine select',anchor=('w*0.4','h*0.4'),center=True)
+##        ui.maketext(0,0,'3D',50,'mine select',anchor=('w*0.4','h*0.4'),center=True)
+        ui.styleset(textsize=50)
+        ui.maketable(0,0,[],boxwidth=50,boxheight=50,scalesize=True,scaleby='vertical',anchor=('w/2','h/2'),center=True,menu='mine game',ID='minefield',linesize=0,textsize=50)
+
 
     def makesudokutableinput(self,grid):
         trueg = grid
@@ -474,7 +521,6 @@ class Main:
             obj.resetcords(ui)
             return True
         return False
-
     def loadleveldata(self):
         if not os.path.isfile(pyui.resourcepath('data.json')):
             data = {}
@@ -491,6 +537,23 @@ class Main:
     def storeleveldata(self):
         with open('data.json','w') as f:
             json.dump(self.leveldata,f)
+
+    def openmine(self,x,y,z,cover):
+        self.field = Minesweeper.gengrid(x,y,z,cover)
+
+        data = copy.deepcopy(self.field)
+        
+        for a in range(y):
+            for b in range(z):
+                for c in range(x):
+                    num = data[a][b][c]
+                    data[a][b][c] = ui.maketext(0,0,'',50,img=Minesweeper.img_unknown,scaleby='vertical',border=0,verticalspacing=0,horizontalspacing=0)
+        ui.IDs['minefield'].data = data[0]
+        ui.IDs['minefield'].refresh(ui)
+                    
+        
+        ui.movemenu('mine game','left')
+        
 
 main = Main()
 
