@@ -340,7 +340,7 @@ class Minesweeper:
         
         
     def gengrid(x,y,z,cover):
-        mines = int(x*y*z*cover)
+        mines = round(x*y*z*cover)
         
         field = []
         for a in range(y):
@@ -363,6 +363,8 @@ class Minesweeper:
                     if field[a][b][c] == 0:
                         field[a][b][c] = Minesweeper.count(field,c,a,b)
         return field
+##    def solve(field,x,y,z,fieldmap):
+##        
 
     def count(field,x,y,z):
         if field[y][z][x] == -1:
@@ -467,16 +469,29 @@ class Main:
         ui.makebutton(0,50,'Easy - 4x4x4',40,lambda: self.openmine(4,4,4,0.1),'mine select',anchor=('w*0.5','h*0.4'),center=True)
         ui.makebutton(0,100,'Medium - 6x6x6',40,lambda: self.openmine(6,6,6,0.1),'mine select',anchor=('w*0.5','h*0.4'),center=True)
         ui.makebutton(0,150,'Hard - 8x8x8',40,lambda: self.openmine(8,8,8,0.1),'mine select',anchor=('w*0.5','h*0.4'),center=True)
-        
+
+        # custom game sliders/gui
         ui.maketext(0,0,'Custom',55,'mine select',anchor=('w*0.75','h*0.4'),center=True)
-##        ui.makebutton(0,40,'Easy - 4x4x4',45,lambda: self.openmine(3,3,3,0.1),'mine select',anchor=('w*0.5','h*0.4'),center=True)
-##        ui.makebutton(0,90,'Medium - 6x6x6',45,lambda: self.openmine(6,6,6,0.1),'mine select',anchor=('w*0.5','h*0.4'),center=True)
-##        ui.makebutton(0,140,'Hard - 8x8x8',45,lambda: self.openmine(8,8,8,0.1),'mine select',anchor=('w*0.5','h*0.4'),center=True)
+        ui.makeslider(50,50,120,15,15,'mine select',anchor=('w*0.75','h*0.4'),center=True,startp=5,increment=1,minp=1,command=self.updatecustomsliders,ID='widthslider')
+        ui.makeslider(50,90,120,15,15,'mine select',anchor=('w*0.75','h*0.4'),center=True,startp=5,increment=1,minp=1,command=self.updatecustomsliders,ID='lengthslider')
+        ui.makeslider(50,130,120,15,15,'mine select',anchor=('w*0.75','h*0.4'),center=True,startp=1,increment=1,minp=1,command=self.updatecustomsliders,ID='layerslider')
+        ui.makeslider(50,170,120,15,0.9,'mine select',anchor=('w*0.75','h*0.4'),center=True,startp=0.2,increment=0.01,minp=0.01,command=self.updatecustomsliders,ID='coverslider')
+        ui.maketext(-25,50,'Width: 5',32,'mine select',anchor=('w*0.75','h*0.4'),objanchor=('w','h/2'),ID='widthslider text')
+        ui.maketext(-25,90,'Length: 5',32,'mine select',anchor=('w*0.75','h*0.4'),objanchor=('w','h/2'),ID='lengthslider text')
+        ui.maketext(-25,130,'Layers: 1',32,'mine select',anchor=('w*0.75','h*0.4'),objanchor=('w','h/2'),ID='layerslider text')
+        ui.maketext(-25,170,'Bombs: 20%',32,'mine select',anchor=('w*0.75','h*0.4'),objanchor=('w','h/2'),ID='coverslider text')
+        ui.makebutton(-10,215,'Play Custom',45,lambda: self.openmine(-1,-1,-1,-1),'mine select',anchor=('w*0.75','h*0.4'),center=True)
         
+        # minefield game
         ui.styleset(textsize=50)
-        ui.maketable(0,0,[],boxwidth=50,boxheight=50,scalesize=True,scaleby='vertical',anchor=('w/2','h/2'),center=True,menu='mine game',ID='minefield',linesize=0,textsize=50,bounditems=[
-        ui.maketable(40,0,[],[],ID='field layer',anchor=('w','h/2'),objanchor=(0,'h/2'),boxwidth=50,boxheight=50,col=(140,140,140))
+        ui.maketable(0,0,[],[],boxwidth=50,boxheight=50,scalesize=True,scaleby='vertical',anchor=('w/2','h/2'),center=True,menu='mine game',ID='minefield',linesize=0,textsize=50,bounditems=[
+        ui.maketable(40,0,[],[ui.maketext(0,0,'0',40,ID='bomb count',textcenter=True)],ID='field layer',anchor=('w','h/2'),objanchor=(0,'h/2'),boxwidth=50,boxheight=50,col=(140,140,140))
             ])
+        
+        
+        # win/lose menu
+        ui.makewindowedmenu(0,0,200,150,'field layer','field layer')
+        ui.maketext(0,40,'Are You Sure?',40,'clear confirm',center=True,anchor=('w/2',0),backingcol=(47, 86, 179))
 
 
     def makesudokutableinput(self,grid):
@@ -657,6 +672,10 @@ class Main:
             json.dump(self.leveldata,f)
 
     def openmine(self,x,y,z,cover):
+        if x == -1: x = ui.IDs['widthslider'].slider
+        if y == -1: y = ui.IDs['layerslider'].slider
+        if z == -1: z = ui.IDs['lengthslider'].slider
+        if cover == -1: cover = ui.IDs['coverslider'].slider
         self.bombcoverage = cover
         ui.IDs['minefield'].wipe(ui)
         self.field = Minesweeper.gengrid(x,y,z,cover)
@@ -670,40 +689,44 @@ class Main:
                     num = data[a][b][c]
                     func = funcermc(self,c,a,b)
                     func2 = funcerpf(self,c,a,b)
-                    data[a][b][c] = ui.maketext(0,0,'',50,img=Minesweeper.genimage(self.field,c,a,b,self.fieldmap),scaleby='vertical',border=0,verticalspacing=0,horizontalspacing=0,command=func.func,bounditems=[
+                    data[a][b][c] = ui.maketext(-100,-100,'',50,img=Minesweeper.genimage(self.field,c,a,b,self.fieldmap),scaleby='vertical',border=0,verticalspacing=0,horizontalspacing=0,command=func.func,bounditems=[
                         ui.maketext(0,0,'',width=50,height=50,command=func2.func,clicktype=2,scaleby='vertical')])
         self.fieldlayer = 0
         ui.IDs['minefield'].data = data[self.fieldlayer]
         ui.IDs['minefield'].refresh(ui)
         self.freshfield = True
 
-        ui.IDs['field layer'].wipe(ui)
+        ui.IDs['field layer'].wipe(ui,False)
         data = []
-        IDs = [f'layerselector{i}' for i in range(y)]
-        for a in range(y):
-            func = funcerml(self,a)
-            data.append([ui.makebutton(0,0,'',command=func.func,col=(100,200,100),togglecol=(151,150,150),toggleable=True,bindtoggle=IDs,ID=IDs[a],backingcol=(130,130,130),toggle=False)])
-        
-        data[self.fieldlayer][self.fieldlayer].toggle = True
+        if y != 1:
+            IDs = [f'layerselector{i}' for i in range(y)]
+            for a in range(y):
+                func = funcerml(self,a)
+                data.append([ui.makebutton(0,0,'',command=func.func,col=(100,200,100),togglecol=(151,150,150),toggleable=True,bindtoggle=IDs,ID=IDs[a],backingcol=(130,130,130),toggle=False)])
+            data[self.fieldlayer][self.fieldlayer].toggle = True
+            
+        ui.IDs['bomb count'].text = str(round(x*y*z*cover))
         data.reverse()
         ui.IDs['field layer'].data = data
-        ui.IDs['field layer'].refresh(ui)             
+        ui.IDs['field layer'].refresh(ui)
+
         
         ui.movemenu('mine game','left')
     def mineclicked(self,x,y,z):
-        if self.freshfield:
-            while self.field[y][z][x] != 0:
-                self.field = Minesweeper.gengrid(len(self.field[0][0]),len(self.field),len(self.field[0]),self.bombcoverage)
-            self.movelayer(self.fieldlayer)
+        if self.fieldmap[y][z][x] != 2:
+            if self.freshfield:
+                while self.field[y][z][x] != 0:
+                    self.field = Minesweeper.gengrid(len(self.field[0][0]),len(self.field),len(self.field[0]),self.bombcoverage)
+                self.movelayer(self.fieldlayer)
 
-        self.freshfield = False
-        if self.field[y][z][x] == -1:
-            print('BOMB - YOU FAILED')
-        self.fieldmap[y][z][x] = 1
-        self.updatemine(x,y,z)
+            self.freshfield = False
+            if self.field[y][z][x] == -1:
+                print('BOMB - YOU FAILED')
+            self.fieldmap[y][z][x] = 1
+            self.updatemine(x,y,z)
     def updatemine(self,x,y,z):
         doubleupdate = []
-        if self.field[y][z][x] == 0:
+        if self.field[y][z][x] == 0 and self.fieldmap[y][z][x] == 1:
             for a in range(-1,2):
                 for b in range(-1,2):
                     for c in range(-1,2):
@@ -718,16 +741,33 @@ class Main:
         for a in doubleupdate:
             self.updatemine(a[0],a[1],a[2])
     def placeflag(self,x,y,z):
-        if self.fieldmap[y][z][x] == 2:
-            self.fieldmap[y][z][x] = 0
-        elif self.fieldmap[y][z][x] == 0:
-            self.fieldmap[y][z][x] = 2
-        else:
-            return
-        self.updatemine(x,y,z)
+        if not self.freshfield:
+            if self.fieldmap[y][z][x] == 2:
+                self.fieldmap[y][z][x] = 0
+                ui.IDs['bomb count'].text = str(int(ui.IDs['bomb count'].text)+1)
+            elif self.fieldmap[y][z][x] == 0:
+                self.fieldmap[y][z][x] = 2
+                ui.IDs['bomb count'].text = str(int(ui.IDs['bomb count'].text)-1)
+            else:
+                return
+            ui.IDs['bomb count'].refresh(ui)
+            self.updatemine(x,y,z)
+            if self.checkfieldsolved():
+                print('solved')
+    def checkfieldsolved(self):
+        solved = True
+        for a in range(len(self.field)):
+            for b in range(len(self.field[a])):
+                for c in range(len(self.field[a][b])):
+                    if self.field[a][b][c] == -1 and self.fieldmap[a][b][c] != 2:
+                        solved = False
+                    elif self.field[a][b][c] != -1 and self.fieldmap[a][b][c] == 2:
+                        solved = False
+        return solved
         
     def movelayer(self,level):
-        ui.IDs['field layer'].data[len(self.field)-level-1][0].toggle = True
+        if len(self.field)!=1:
+            ui.IDs['field layer'].data[len(self.field)-level-1][0].toggle = True
         self.fieldlayer = level
         table = ui.IDs['minefield']
         for z in range(len(table.data)):
@@ -738,7 +778,15 @@ class Main:
                 table.data[z][x].img = Minesweeper.genimage(self.field,x,self.fieldlayer,z,self.fieldmap)
                 table.data[z][x].refresh(ui)
                 table.data[z][x].bounditems[0].command = func2.func
-        
+    def updatecustomsliders(self):
+        ui.IDs['widthslider text'].text = f"Width: {ui.IDs['widthslider'].slider}"
+        ui.IDs['lengthslider text'].text = f"Length: {ui.IDs['lengthslider'].slider}"
+        ui.IDs['layerslider text'].text = f"Layers: {ui.IDs['layerslider'].slider}"
+        ui.IDs['coverslider text'].text = f"Bombs: {int(ui.IDs['coverslider'].slider*100)}%"
+        ui.IDs['widthslider text'].refresh(ui)
+        ui.IDs['lengthslider text'].refresh(ui)
+        ui.IDs['layerslider text'].refresh(ui)
+        ui.IDs['coverslider text'].refresh(ui)
 
 main = Main()
 
@@ -759,7 +807,6 @@ while not done:
     pygame.display.flip()
     clock.tick(60)                                               
 pygame.quit()
-
 
 
 
