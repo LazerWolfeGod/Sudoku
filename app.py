@@ -490,8 +490,14 @@ class Main:
         
         
         # win/lose menu
-        ui.makewindowedmenu(0,0,200,150,'field layer','field layer')
-        ui.maketext(0,40,'Are You Sure?',40,'clear confirm',center=True,anchor=('w/2',0),backingcol=(47, 86, 179))
+        ui.makewindowedmenu(0,0,200,150,'mine win','mine game',center=True,anchor=('w/2','h/2'))
+        ui.maketext(0,40,'Solved!',40,'mine win',center=True,anchor=('w/2',0),backingcol=(47, 86, 179))
+        ui.makebutton(0,100,'Back',40,self.returnfromfield,'mine win',center=True,anchor=('w/2',0))
+
+        ui.makewindowedmenu(0,0,200,150,'mine lose','mine game',center=True,anchor=('w/2','h/2'))
+        ui.maketext(0,40,'You Lose',40,'mine lose',center=True,anchor=('w/2',0),backingcol=(47, 86, 179))
+        ui.makebutton(0,100,'Back',40,self.returnfromfield,'mine lose',center=True,anchor=('w/2',0))
+        
 
 
     def makesudokutableinput(self,grid):
@@ -721,6 +727,7 @@ class Main:
 
             self.freshfield = False
             if self.field[y][z][x] == -1:
+                ui.movemenu('mine lose','down',backchainadd=False)
                 print('BOMB - YOU FAILED')
             self.fieldmap[y][z][x] = 1
             self.updatemine(x,y,z)
@@ -753,6 +760,7 @@ class Main:
             ui.IDs['bomb count'].refresh(ui)
             self.updatemine(x,y,z)
             if self.checkfieldsolved():
+                ui.movemenu('mine win','down',backchainadd=False)
                 print('solved')
     def checkfieldsolved(self):
         solved = True
@@ -787,6 +795,9 @@ class Main:
         ui.IDs['lengthslider text'].refresh(ui)
         ui.IDs['layerslider text'].refresh(ui)
         ui.IDs['coverslider text'].refresh(ui)
+    def returnfromfield(self):
+        del ui.backchain[-1]
+        ui.movemenu('mine select','right',backchainadd=False)
 
 main = Main()
 
