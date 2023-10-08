@@ -3,7 +3,7 @@ import PyUI as pyui
 import json
 pygame.init()
 screenw = 1200
-screenh = 600
+screenh = 900
 screen = pygame.display.set_mode((screenw,screenh),pygame.RESIZABLE)
 pygame.scrap.init()
 ui = pyui.UI()
@@ -674,7 +674,7 @@ class Main:
         for a in list(out):
             data[int(a)] = out[a]
         while len(data)<len(self.levels):
-            data[len(data)] = [0,self.levels[len(data)-1],False]
+            data[len(data)] = [0,self.levels[len(data)-1][0],False]
         return data
     def storeleveldata(self):
         with open('data.json','w') as f:
