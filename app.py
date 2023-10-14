@@ -6,7 +6,7 @@ screenw = 1200
 screenh = 900
 screen = pygame.display.set_mode((screenw,screenh),pygame.RESIZABLE)
 pygame.scrap.init()
-ui = pyui.UI()
+ui = pyui.UI(0.6)
 done = False
 clock = pygame.time.Clock()
 ui.addinbuiltimage('sudoku',pygame.image.load(pyui.resourcepath('assets\\sukoku.png')))
@@ -522,7 +522,7 @@ class Main:
         return textgrid
 
     def updatesudoku(self,x,y,updateall=True):
-        box = ui.IDs['sudoku grid'].tableimages[y][x][1]
+        box = ui.IDs['sudoku grid'].table[y][x]
         box.chrlimit = 1
         box.text = box.text.replace('0','')
         if '"' in box.text:
@@ -548,27 +548,25 @@ class Main:
             self.updategrid()
     def updategrid(self):
         grid = []
-        for y in ui.IDs['sudoku grid'].tableimages:
+        for y in ui.IDs['sudoku grid'].table:
             grid.append([])
             for x in y:
-                if x[1].text == '':
+                if x.text == '':
                     grid[-1].append(0)
                 else:
-                    grid[-1].append(int(x[1].text[2]))
+                    grid[-1].append(int(x.text[2]))
         self.grid = grid
         self.leveldata[self.level][1] = grid
         if Sudoku.valid(grid) and Sudoku.checksolved(grid):
             self.solved()
         else:
             self.leveldata[self.level][0] = Sudoku.checksolveamount(grid,self.levels[self.level][0])
-            ui.IDs['sudoku progress display'].text = f'{self.leveldata[self.level][0]}%'
-            ui.IDs['sudoku progress display'].refresh(ui)
+            ui.IDs['sudoku progress display'].settext(f'{self.leveldata[self.level][0]}%')
         self.refreshleveltable()
 
     def solved(self):
         self.leveldata[self.level][0] = 'Solved!'
-        ui.IDs['sudoku progress display'].text = f'{self.leveldata[self.level][0]}'
-        ui.IDs['sudoku progress display'].refresh(ui)
+        ui.IDs['sudoku progress display'].settext(f'{self.leveldata[self.level][0]}')
                     
     def refreshleveltable(self):
         fade = pyui.genfade([(255,0,0),(0,235,0)],101)
@@ -583,39 +581,37 @@ class Main:
                     a.prog = int(a.prog)
                     a.text = f'{a.prog}%'
                     a.col = fade[a.prog]
-                a.refresh(ui)
+                a.refresh()
         
     def opensudoku(self,level):
         self.level = level
         ui.movemenu('sudoku level','left')
         grid = ui.IDs['sudoku grid']
-        grid.wipe(ui)
+        grid.wipe()
         grid.data = self.makesudokutableinput(self.levels[level][0])
         grid.boxwidth = 50
         grid.boxheight = 50
-        grid.refresh(ui)
-        ui.IDs['sudoku level display'].text = f'Level: {level+1}'
-        ui.IDs['sudoku level display'].refresh(ui)
-        ui.IDs['sudoku progress display'].text = f'{self.leveldata[level][0]}%'
-        ui.IDs['sudoku progress display'].refresh(ui)
-        for y,a in enumerate(grid.tableimages):
+        grid.refresh()
+        ui.IDs['sudoku level display'].settext(f'Level: {level+1}')
+        ui.IDs['sudoku progress display'].settext(f'{self.leveldata[level][0]}%')
+        for y,a in enumerate(grid.table):
             for x,b in enumerate(a):
-                if type(b[1]) == pyui.TEXTBOX:
+                if type(b) == pyui.TEXTBOX:
                     if self.leveldata[level][1][y][x] != 0:
-                        b[1].text = str(self.leveldata[level][1][y][x])
+                        b.text = str(self.leveldata[level][1][y][x])
                         self.updatesudoku(x,y,False)
-                        b[1].refresh(ui)
+                        b.refresh()
         self.updategrid()
 
     def cleargrid(self):
         grid = ui.IDs['sudoku grid']
-        for y,a in enumerate(grid.tableimages):
+        for y,a in enumerate(grid.table):
             for x,b in enumerate(a):
-                if type(b[1]) == pyui.TEXTBOX:
+                if type(b) == pyui.TEXTBOX:
                     if self.leveldata[self.level][1][y][x] != 0:
-                        b[1].text = '0'
+                        b.text = '0'
                         self.updatesudoku(x,y,False)
-                        b[1].refresh(ui)
+                        b.refresh(ui)
         self.updategrid()
 
     def findclue(self,disptext):
@@ -655,10 +651,10 @@ class Main:
         ui.delete('sudoku pop up',False)
         ui.maketext(0,10,txt,45,'sudoku level',backingdraw=True,killtime=5,ID='sudoku pop up',anchor=('w/2',0),objanchor=('w/2',0))
     def highlight(self,x,y,glowcol=(240,40,40,90),killtime=30):
-        obj = ui.IDs['sudoku grid'].tableimages[y][x][1]
+        obj = ui.IDs['sudoku grid'].table[y][x]
         if not (pyui.RECT in [type(a) for a in obj.bounditems]):
             obj.binditem(ui.makerect(0,0,50,50,backingdraw=False,glow=2,glowcol=glowcol,killtime=killtime,scaleby='vertical'))
-            obj.resetcords(ui)
+            obj.resetcords()
             return True
         return False
     def loadleveldata(self):
@@ -702,10 +698,10 @@ class Main:
                         ui.maketext(0,0,'',width=50,height=50,command=func2.func,clicktype=2,scaleby='vertical')])
         self.fieldlayer = 0
         ui.IDs['minefield'].data = data[self.fieldlayer]
-        ui.IDs['minefield'].refresh(ui)
+        ui.IDs['minefield'].refresh()
         self.freshfield = True
 
-        ui.IDs['field layer'].wipe(ui,False)
+        ui.IDs['field layer'].wipe(False)
         data = []
         if y != 1:
             IDs = [f'layerselector{i}' for i in range(y)]
@@ -717,7 +713,7 @@ class Main:
         ui.IDs['bomb count'].text = str(round(x*y*z*cover))
         data.reverse()
         ui.IDs['field layer'].data = data
-        ui.IDs['field layer'].refresh(ui)
+        ui.IDs['field layer'].refresh()
 
         
         ui.movemenu('mine game','left')
@@ -747,7 +743,7 @@ class Main:
                                 doubleupdate.append((x+c,y+a,z+b))
         if self.fieldlayer == y:
             ui.IDs['minefield'].data[z][x].img = Minesweeper.genimage(self.field,x,y,z,self.fieldmap)
-            ui.IDs['minefield'].data[z][x].refresh(ui)
+            ui.IDs['minefield'].data[z][x].refresh()
         for a in doubleupdate:
             self.updatemine(a[0],a[1],a[2])
     def placeflag(self,x,y,z):
@@ -760,7 +756,7 @@ class Main:
                 ui.IDs['bomb count'].text = str(int(ui.IDs['bomb count'].text)-1)
             else:
                 return
-            ui.IDs['bomb count'].refresh(ui)
+            ui.IDs['bomb count'].refresh()
             self.updatemine(x,y,z)
             if self.checkfieldsolved():
                 ui.movemenu('mine win','down',backchainadd=False)
@@ -787,17 +783,13 @@ class Main:
                 func2 = funcerpf(self,x,self.fieldlayer,z)
                 table.data[z][x].command = func.func
                 table.data[z][x].img = Minesweeper.genimage(self.field,x,self.fieldlayer,z,self.fieldmap)
-                table.data[z][x].refresh(ui)
+                table.data[z][x].refresh()
                 table.data[z][x].bounditems[0].command = func2.func
     def updatecustomsliders(self):
-        ui.IDs['widthslider text'].text = f"Width: {ui.IDs['widthslider'].slider}"
-        ui.IDs['lengthslider text'].text = f"Length: {ui.IDs['lengthslider'].slider}"
-        ui.IDs['layerslider text'].text = f"Layers: {ui.IDs['layerslider'].slider}"
-        ui.IDs['coverslider text'].text = f"Bombs: {int(ui.IDs['coverslider'].slider*100)}%"
-        ui.IDs['widthslider text'].refresh(ui)
-        ui.IDs['lengthslider text'].refresh(ui)
-        ui.IDs['layerslider text'].refresh(ui)
-        ui.IDs['coverslider text'].refresh(ui)
+        ui.IDs['widthslider text'].settext(f"Width: {ui.IDs['widthslider'].slider}")
+        ui.IDs['lengthslider text'].settext(f"Length: {ui.IDs['lengthslider'].slider}")
+        ui.IDs['layerslider text'].settext(f"Layers: {ui.IDs['layerslider'].slider}")
+        ui.IDs['coverslider text'].settext(f"Bombs: {int(ui.IDs['coverslider'].slider*100)}%")
     def returnfromfield(self):
         del ui.backchain[-1]
         ui.movemenu('mine select','right',backchainadd=False)
@@ -817,14 +809,13 @@ while not done:
                 ui.menuback()
         if event.type == pygame.VIDEORESIZE:
             ui.IDs['levelselscroller'].maxp=ui.IDs['sudokuleveltable'].height
-            ui.IDs['levelselscroller'].refresh(ui)
+            ui.IDs['levelselscroller'].refresh()
     screen.fill(pyui.Style.wallpapercol)
     
     ui.rendergui(screen)
     pygame.display.flip()
     clock.tick(60)                                               
 pygame.quit()
-
 
 
 
