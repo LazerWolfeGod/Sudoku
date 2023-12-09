@@ -1,4 +1,4 @@
-# Sudoku
+# Sudoku/Minesweeper App
 An app that contains both sudoku and minesweeper.
 
 The [app](https://github.com/LazerWolfeGod/Sudoku/blob/main/app.py) file runs the main program.
