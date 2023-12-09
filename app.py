@@ -1,12 +1,12 @@
 import pygame,math,random,time,copy,os
-import PyUI as pyui
+from UIpygame import PyUI as pyui
 import json
 pygame.init()
 screenw = 1200
 screenh = 900
 screen = pygame.display.set_mode((screenw,screenh),pygame.RESIZABLE)
 pygame.scrap.init()
-ui = pyui.UI(0.6)
+ui = pyui.UI()
 done = False
 clock = pygame.time.Clock()
 ui.addinbuiltimage('sudoku',pygame.image.load(pyui.resourcepath('assets\\sukoku.png')))
@@ -462,18 +462,18 @@ class Main:
         # minesweeper gui
         ui.maketext(0,80,'Minesweeper Gamemode Select',60,'mine select',anchor=('w/2',0),center=True,maxwidth=450,textcenter=True)
         ui.maketext(0,0,'2D',55,'mine select',anchor=('w*0.25','h*0.4'),center=True)
-        ui.makebutton(0,50,'Easy - 10x10',40,lambda: self.openmine(10,1,10,0.2),'mine select',anchor=('w*0.25','h*0.4'),center=True)
-        ui.makebutton(0,100,'Medium - 15x15',40,lambda: self.openmine(15,1,15,0.25),'mine select',anchor=('w*0.25','h*0.4'),center=True)
-        ui.makebutton(0,150,'Hard - 20x20',40,lambda: self.openmine(20,1,20,0.3),'mine select',anchor=('w*0.25','h*0.4'),center=True)
+        ui.makebutton(0,50,'Easy - 6x6',40,lambda: self.openmine(6,1,6,0.2),'mine select',anchor=('w*0.25','h*0.4'),center=True)
+        ui.makebutton(0,100,'Medium - 12x12',40,lambda: self.openmine(12,1,12,0.25),'mine select',anchor=('w*0.25','h*0.4'),center=True)
+        ui.makebutton(0,150,'Hard - 18x18',40,lambda: self.openmine(18,1,18,0.3),'mine select',anchor=('w*0.25','h*0.4'),center=True)
         ui.maketext(0,0,'3D',55,'mine select',anchor=('w*0.5','h*0.4'),center=True)
-        ui.makebutton(0,50,'Easy - 4x4x4',40,lambda: self.openmine(4,4,4,0.1),'mine select',anchor=('w*0.5','h*0.4'),center=True)
-        ui.makebutton(0,100,'Medium - 6x6x6',40,lambda: self.openmine(6,6,6,0.1),'mine select',anchor=('w*0.5','h*0.4'),center=True)
+        ui.makebutton(0,50,'Easy - 3x3x3',40,lambda: self.openmine(3,3,3,0.1),'mine select',anchor=('w*0.5','h*0.4'),center=True)
+        ui.makebutton(0,100,'Medium - 5x5x5',40,lambda: self.openmine(5,5,5,0.1),'mine select',anchor=('w*0.5','h*0.4'),center=True)
         ui.makebutton(0,150,'Hard - 8x8x8',40,lambda: self.openmine(8,8,8,0.1),'mine select',anchor=('w*0.5','h*0.4'),center=True)
 
         # custom game sliders/gui
         ui.maketext(0,0,'Custom',55,'mine select',anchor=('w*0.75','h*0.4'),center=True)
-        ui.makeslider(50,50,120,15,15,'mine select',anchor=('w*0.75','h*0.4'),center=True,startp=5,increment=1,minp=1,command=self.updatecustomsliders,ID='widthslider')
-        ui.makeslider(50,90,120,15,15,'mine select',anchor=('w*0.75','h*0.4'),center=True,startp=5,increment=1,minp=1,command=self.updatecustomsliders,ID='lengthslider')
+        ui.makeslider(50,50,120,15,18,'mine select',anchor=('w*0.75','h*0.4'),center=True,startp=5,increment=1,minp=1,command=self.updatecustomsliders,ID='widthslider')
+        ui.makeslider(50,90,120,15,18,'mine select',anchor=('w*0.75','h*0.4'),center=True,startp=5,increment=1,minp=1,command=self.updatecustomsliders,ID='lengthslider')
         ui.makeslider(50,130,120,15,15,'mine select',anchor=('w*0.75','h*0.4'),center=True,startp=1,increment=1,minp=1,command=self.updatecustomsliders,ID='layerslider')
         ui.makeslider(50,170,120,15,0.9,'mine select',anchor=('w*0.75','h*0.4'),center=True,startp=0.2,increment=0.01,minp=0.01,command=self.updatecustomsliders,ID='coverslider')
         ui.maketext(-25,50,'Width: 5',32,'mine select',anchor=('w*0.75','h*0.4'),objanchor=('w','h/2'),ID='widthslider text')
@@ -816,7 +816,6 @@ while not done:
     pygame.display.flip()
     clock.tick(60)                                               
 pygame.quit()
-
 
 
 
